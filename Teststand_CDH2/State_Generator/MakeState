@@ -1,0 +1,9 @@
+CXX ?= g++ 
+ZMQ = -lzmq
+pthread = -pthread
+
+all:
+	$(CXX) -std=gnu++11 State_Generator.cpp $(ZMQ) $(pthread) -o State_Generator
+
+clean:
+	rm State_Generator
