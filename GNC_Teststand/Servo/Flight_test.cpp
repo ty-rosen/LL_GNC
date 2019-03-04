@@ -10,6 +10,7 @@
 #include <sstream>
 #include <fstream>
 #include <algorithm>
+#include <chrono>
 
 #include <zmq.hpp>
 #include "Navio/PWM.h"
@@ -208,19 +209,21 @@ void flight_thread (bool &connected, bool &operating){
 	std::string rate_string;
 	getline(profile, rate_string);
 	double data_rate = std::stof(rate_string);
-	int delay = int(1000000./data_rate); //remove once chrono is implemented
+	int interval = int(1000000./data_rate);
 
 	//Wait until connected
 	while(!connected){
 		usleep(500000);
 	}
+	
+	//Get start time and convert to a variable that can be used in the while loop
+	auto start = std::chrono::high_resolution_clock::now();
+	auto start_time = std::chrono::duration_cast<std::chrono::microseconds>(start.time_since_epoch()).count();
 
 	while(connected){
 		if(operating){
 			float position = SERVO_MIN;
-/*
-			### Do chrono stuff here ###
-*/
+
 			//Get next servo position from data file
 			std::string pos_string;
 			getline(profile, pos_string);
@@ -229,8 +232,17 @@ void flight_thread (bool &connected, bool &operating){
 			//Move servo
 			double movement = double(position)/1000;
 			std::cout << "Moving to: " << movement <<std::endl;
+			
+			//Ensure that the correct interval has passed before proceeding
+			while (static_cast<int>(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()) < static_cast<int>(start_time) + interval) {
+				continue;
+			}
+			
 			engPwm1.set_duty_cycle(PWM_OUTPUT1, movement);	
-			usleep(delay);		
+			
+			//Get "start" time for the next servo movement
+			start = std::chrono::high_resolution_clock::now();
+			start_time = std::chrono::duration_cast<std::chrono::microseconds>(start.time_since_epoch()).count();
 		}
 		else{
 			continue;
