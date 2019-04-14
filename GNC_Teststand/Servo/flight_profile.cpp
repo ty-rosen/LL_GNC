@@ -16,6 +16,7 @@ vector<float> flight_profile(int hz)
 	float incr;
 	float lastval;
 	vector<float> output;
+	output.push_back(1);
 
 	//While there are still values in the csv file
 	//get them
@@ -76,9 +77,19 @@ vector<float> flight_profile(int hz)
 
 int main()
 {
-	vector<float> a = flight_profile(2);
-	for (vector<float>::const_iterator i = a.begin(); i != a.end(); i++){
-		cout << *i << "\n";
-	}
+	int hz;
+	cout << "Enter hertz frequency" << "\n";
+	cin >> hz;
 
+	ofstream myfile;
+	myfile.open("flight_profile.txt");
+
+	vector<float> a = flight_profile(hz);
+
+	for (vector<float>::const_iterator i = a.begin(); i != a.end(); i++){
+		myfile << *i << "\n";
+	}
+	cout << "flight_profile.txt created";
+	myfile.close();
+	return 0;
 }
